@@ -27,6 +27,8 @@ const roomRoute = require("./routes/roomRoute")
 const groupRoutes = require("./routes/groupe");
 const matieresRoutes = require("./routes/matiere");
 const emploiDateRoutes = require("./routes/emploiDate");
+const statRoutes = require("./routes/statsController");
+app.use("/api/statistics",statRoutes );
 
  app.use("/api/user", authRouter);
 app.use("/api/departement",DepartementRouter );

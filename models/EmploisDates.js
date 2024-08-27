@@ -9,7 +9,7 @@ const emploiDatesSchema = new mongoose.Schema(
     endDate: {
         type: Date,
         required: true,
-      },
+    },
   },
   {
     timestamps: true,

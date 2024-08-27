@@ -34,8 +34,7 @@ const DateEmploi=require('../models/EmploisDates')
               new: true
             });
           } else {
-            // Add a new timeTable entry
-            await Group.findByIdAndUpdate(group, {
+             await Group.findByIdAndUpdate(group, {
               $push: { timeTable: { emploiDateId, sessions: [{ ...session, professorId: professorId }], timeSlots } }
             });
           }
@@ -69,24 +68,51 @@ const getTimetableByProfessor = asyncHandler(async (req, res) => {
   }
 });
 
-
- const updateTimetable = asyncHandler(async (req, res) => {
+const updateTimetable = asyncHandler(async (req, res) => {
   const { timetableId } = req.params;
   const { sessions, emploiDateId, timeSlots } = req.body;
+  
   try {
-    const updatedTimetable = await Timetable.findByIdAndUpdate(
+     const updatedTimetable = await Timetable.findByIdAndUpdate(
       timetableId,
       { sessions, emploiDateId, timeSlots },
       { new: true }
     );
+    
     if (!updatedTimetable) {
       return res.status(404).json({ success: false, message: "Timetable not found" });
     }
-    res.status(200).json({ success: true, data: updatedTimetable });
+
+       const { group, _id } = sessions;
+
+      const existingGroup = await Group.findById(group);
+
+      if (existingGroup) {
+        const existingTimeTableEntry = existingGroup.timeTable.find(
+          entry => entry.emploiDateId.equals(emploiDateId)
+        );
+
+        if (existingTimeTableEntry) {
+           await Group.findByIdAndUpdate(group, {
+            $set: {
+              "timeTable.$[entry].sessions": existingTimeTableEntry.sessions 
+            }
+          }, {
+            arrayFilters: [{ "entry.emploiDateId": emploiDateId }],
+            new: true
+          });
+        } else {
+           await Group.findByIdAndUpdate(group, {
+            $push: { timeTable: { emploiDateId, sessions: [sessions], timeSlots } }
+          });
+        }
+      }
+      res.status(200).json({ success: true, data: updatedTimetable });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 
 const getTimetableById = asyncHandler(async (req, res) => {
   const { timetableId } = req.params;
@@ -104,8 +130,7 @@ const getTimetableById = asyncHandler(async (req, res) => {
 const deleteTimetable = asyncHandler(async (req, res) => {
   const { timetableId } = req.params;
   try {
-    // Find the timetable to delete
-    const deletedTimetable = await Timetable.findById(timetableId);
+     const deletedTimetable = await Timetable.findById(timetableId);
     if (!deletedTimetable) {
       return res.status(404).json({ success: false, message: "Timetable not found" });
     }
